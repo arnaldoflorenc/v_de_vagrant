@@ -1,0 +1,87 @@
+Vagrant.configure("2") do |config|
+	is_arm = RUBY_PLATFORM.include?("arm64") || RUBY_PLATFORM.include?("aarch64")
+	config.vm.define "frontend" do |frontend|
+		frontend.vm.box = "bento/ubuntu-22.04" if is_arm
+		frontend.vm.box = "ubuntu/focal64" if !is_arm
+		frontend.vm.box_architecture = "arm64" if is_arm
+		frontend.vm.hostname = "frontend"
+		frontend.vm.network "forwarded_port", guest: 5173, host: "5173"
+		frontend.vm.network "private_network", ip: "10.1.10.2",netmask: "255.255.255.0", virtualbox__intnet: "front_back"
+		frontend.vm.provider "virtualbox" do |vb|
+			#vb.customize ["modifyvm", :id, "--appendconfig", "nopti nospectre_v2 nospectre_v1 irqpoll"] if !is_arm
+			#vb.customize ["storagectl", :id, "--name", "SATA Controller", "--hostiocache", "on"] if !is_arm
+			#vb.customize ["modifyvm", :id, "--ioapic", "on"] if !is_arm
+			#vb.customize ["modifyvm", :id, "--paravirt-provider", "hyperv"] if !is_arm
+			vb.gui = !is_arm
+			vb.memory = "2048"
+			vb.cpus = 2
+			vb.name = "frontend"
+			end
+		frontend.vm.provision "shell", inline: <<-SHELL
+			sudo apt-get -y update
+			apt-get install -y \
+            	curl \
+            	net-tools \
+            	git
+				
+			curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+
+      		sudo apt-get install -y nodejs
+      		node -v
+      		npm -v
+
+			cd /home/vagrant
+
+			npm create vite@latest frontend-app -- \
+				--template react
+
+			cd frontend-app
+			npm install
+		SHELL
+	end
+
+	config.vm.define "backend" do |backend|
+		backend.vm.box = "bento/ubuntu-22.04" if is_arm
+		backend.vm.box = "ubuntu/focal64" if !is_arm
+		backend.vm.box_architecture = "arm64" if is_arm
+		backend.vm.hostname = "backend"
+		#backend.vm.network "forwarded_port", guest: 22, host: "2233"
+		backend.vm.network "private_network", ip: "10.1.10.3",netmask: "255.255.255.0", virtualbox__intnet: "front_back"
+		backend.vm.network "private_network", ip: "01.1.20.2",netmask: "255.255.255.0", virtualbox__intnet: "back_db"
+		backend.vm.provider "virtualbox" do |vb|
+			vb.gui = !is_arm
+			vb.memory = "2048"
+			vb.cpus = 2
+			vb.name = "backend"
+			end
+		backend.vm.provision "shell", inline: <<-SHELL
+			sudo apt-get -y update
+			sudo apt-get -y install cur net-tools
+			curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+			sudo apt-get install -y nodejs
+
+      		node -v
+      		npm -v
+		SHELL
+	end
+
+	config.vm.define "db" do |db|
+		db.vm.box = "bento/ubuntu-22.04" if is_arm
+		db.vm.box = "ubuntu/focal64" if !is_arm
+		db.vm.box_architecture = "arm64" if is_arm
+		db.vm.hostname = "db"
+		db.vm.network "private_network", ip:"10.1.20.3",netmask: "255.255.255.0",virtualbox__intnet: "back_db"
+		db.vm.provider "virtualbox" do  |vb|
+			vb.gui = !is_arm
+			vb.memory = "2048"
+			vb.cpus = 2
+			vb.name = "db"
+			end
+		db.vm.provision "shell", inline: <<-SHELL
+			sudo apt-get -y update
+			sudo apt-get -y install mysql-server net-tools
+			sudo systemctl enable mysql
+			sudo systemctl start mysql
+		SHELL
+	end
+end
