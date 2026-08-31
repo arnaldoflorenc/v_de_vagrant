@@ -7,7 +7,8 @@ Vagrant.configure("2") do |config|
 		frontend.vm.hostname = "frontend"
 		frontend.vm.network "forwarded_port", guest: 80, host: 8080
 		frontend.vm.network "forwarded_port", guest: 5173, host: "5173"
-		frontend.vm.network "private_network", ip: "10.1.1.1",netmask: "255.255.255.0", virtualbox__intnet: "front_back"
+		frontend.vm.network "private_network", ip: "10.1.1.10",netmask: "255.255.255.0", virtualbox__intnet: "front_back"
+		frontend.vm.synced_folder "./shared/frontend", "/home/vagrant/frontend"
 		frontend.vm.provider "virtualbox" do |vb|
 			#vb.customize ["modifyvm", :id, "--appendconfig", "nopti nospectre_v2 nospectre_v1 irqpoll"] if !is_arm
 			#vb.customize ["storagectl", :id, "--name", "SATA Controller", "--hostiocache", "on"] if !is_arm
@@ -20,44 +21,46 @@ Vagrant.configure("2") do |config|
 			end
 
 		frontend.vm.provision "shell", inline: <<-SHELL
-			set -e #serve pra parar a execução caso algum comando falhe
+			set -e
 
-			sudo apt-get -y update
-			apt-get install -y \
-            	curl \
-            	net-tools \
-            	git
-				
+			sudo apt-get update
+
+			sudo apt-get install -y \
+				curl \
+				net-tools \
+				git
+
 			curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-
-      		sudo apt-get install -y nodejs
-      		node -v
-      		npm -v
-
-			cd /home/vagrant
+			sudo apt-get install -y nodejs
 			
-			npm create vite@latest frontend-app -- \
-				--template react
+			echo "Node:" 
+			node -v 
+			
+			echo "NPM:" 
+			npm -v
 
-			cd frontend-app
+			cd /home/vagrant/frontend
+
 			npm install
 
-			cat > src/App.jsx <<'EOF'
-				export default function App() {
-  					return (
-   					 <div style={{ padding: "2rem", fontFamily: "Arial" }}>
-      				<h1>Meu site</h1>
-      				<p>Olá, mundo! Este é o meu primeiro site na VM.</p>
-      				<button>Botão</button>
-   					 </div>
-  					);
-					}
-EOF
-			npm run build
+			cat <<'EOF' | sudo tee /etc/systemd/system/frontend.service
+[Unit]
+Description=React Frontend
+After=network.target
 
-			sudo apt-get install -y nginx
-			sudo cp -r /home/vagrant/frontend-app/dist/* /var/www/html/
-			sudo systemctl restart nginx
+[Service]
+User=vagrant
+WorkingDirectory=/home/vagrant/frontend
+ExecStart=/usr/bin/npm run dev -- --host 0.0.0.0
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+			sudo systemctl daemon-reload
+			sudo systemctl enable frontend
+			sudo systemctl restart frontend
 		SHELL
 	end
 
@@ -68,7 +71,8 @@ EOF
 		backend.vm.hostname = "backend"
 		#backend.vm.network "forwarded_port", guest: 22, host: "2233"
 		backend.vm.network "private_network", ip: "10.1.1.2",netmask: "255.255.255.0", virtualbox__intnet: "front_back"
-		backend.vm.network "private_network", ip: "10.1.2.1",netmask: "255.255.255.0", virtualbox__intnet: "back_db"
+		backend.vm.network "private_network", ip: "10.1.2.10",netmask: "255.255.255.0", virtualbox__intnet: "back_db"
+		backend.vm.synced_folder "./shared/backend", "/home/vagrant/backend"
 		backend.vm.provider "virtualbox" do |vb|
 			vb.gui = !is_arm
 			vb.memory = "2048"
@@ -76,12 +80,47 @@ EOF
 			vb.name = "backend"
 			end
 		backend.vm.provision "shell", inline: <<-SHELL
-			sudo apt-get -y update
-			sudo apt-get -y install curl net-tools
+			set -e
+
+			sudo apt-get update
+
+			sudo apt-get install -y \
+				curl \
+				net-tools \
+				git
+
 			curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 			sudo apt-get install -y nodejs
-      		node -v
-      		npm -v
+
+			echo "Node:" 
+			node -v 
+			
+			echo "NPM:" 
+			npm -v
+
+			cd /home/vagrant/backend
+
+			npm install
+
+			cat <<'EOF' | sudo tee /etc/systemd/system/backend.service
+[Unit]
+Description=Node.js Backend
+After=network.target
+
+[Service]
+User=vagrant
+WorkingDirectory=/home/vagrant/backend
+ExecStart=/usr/bin/npm start
+Restart=always
+Environment=NODE_ENV=development
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+			sudo systemctl daemon-reload
+			sudo systemctl enable backend
+			sudo systemctl restart backend
 		SHELL
 	end
 
@@ -91,6 +130,7 @@ EOF
 		db.vm.box_architecture = "arm64" if is_arm
 		db.vm.hostname = "db"
 		db.vm.network "private_network", ip: "10.1.2.2",netmask: "255.255.255.0", virtualbox__intnet: "back_db"
+		db.vm.synced_folder "./shared/db", "/home/vagrant/db"
 		db.vm.provider "virtualbox" do  |vb|
 			vb.gui = !is_arm
 			vb.memory = "2048"
@@ -98,10 +138,44 @@ EOF
 			vb.name = "db"
 			end
 		db.vm.provision "shell", inline: <<-SHELL
-			sudo apt-get -y update
-			sudo apt-get -y install mysql-server net-tools
+			set -e
+
+			sudo apt-get update
+
+			sudo apt-get install -y \
+				mysql-server \
+				net-tools
+
 			sudo systemctl enable mysql
 			sudo systemctl start mysql
+
+			sudo sed -i 's/^bind-address.*/bind-address = 10.1.2.2/' \
+				/etc/mysql/mysql.conf.d/mysqld.cnf
+
+			sudo systemctl restart mysql
+
+			echo "Aguardando MySQL..."
+
+			until sudo mysqladmin ping --silent; do 
+				sleep 2
+			done
+
+			echo "MySQL está funcionando!"
+
+			if [ -f /home/vagrant/db/schema.sql ]; then 
+				echo "Executando schema.sql..." 
+				sudo mysql < /home/vagrant/DB/schema.sql 
+				echo "schema.sql executado!" 
+			else 
+				echo "AVISO: schema.sql não encontrado!"
+			fi
+
+			echo "Bancos existentes:"
+
+			sudo mysql -e "SHOW DATABASES;"
+
+			echo "Database configurado!"
+
 		SHELL
 	end
 end
