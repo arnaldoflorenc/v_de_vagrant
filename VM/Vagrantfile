@@ -8,42 +8,50 @@ Vagrant.configure("2") do |config|
 		frontend.vm.network "forwarded_port", guest: 80, host: 8080
 		frontend.vm.network "forwarded_port", guest: 5173, host: "5173"
 		frontend.vm.network "private_network", ip: "10.1.1.10",netmask: "255.255.255.0", virtualbox__intnet: "front_back"
-		frontend.vm.synced_folder "./shared/frontend", "/home/vagrant/frontend"
-		frontend.vm.provider "virtualbox" do |vb|
-			#vb.customize ["modifyvm", :id, "--appendconfig", "nopti nospectre_v2 nospectre_v1 irqpoll"] if !is_arm
-			#vb.customize ["storagectl", :id, "--name", "SATA Controller", "--hostiocache", "on"] if !is_arm
-			#vb.customize ["modifyvm", :id, "--ioapic", "on"] if !is_arm
-			#vb.customize ["modifyvm", :id, "--paravirt-provider", "hyperv"] if !is_arm
-			vb.gui = !is_arm
-			vb.memory = "2048"
-			vb.cpus = 2
-			vb.name = "frontend"
-			end
+		    frontend.vm.synced_folder "../shared/frontend", "/home/vagrant/frontend-source"
 
-		frontend.vm.provision "shell", inline: <<-SHELL
-			set -e
+    frontend.vm.provider "virtualbox" do |vb|
+        vb.gui = false
+        vb.memory = "2048"
+        vb.cpus = 2
+        vb.name = "frontend"
+    end
 
-			sudo apt-get update
+    frontend.vm.provision "shell", inline: <<-SHELL
+        set -e
 
-			sudo apt-get install -y \
-				curl \
-				net-tools \
-				git
+        sudo apt-get update
 
-			curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-			sudo apt-get install -y nodejs
-			
-			echo "Node:" 
-			node -v 
-			
-			echo "NPM:" 
-			npm -v
+        sudo apt-get install -y \
+            curl \
+            net-tools \
+            git \
+            rsync
 
-			cd /home/vagrant/frontend
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+        sudo apt-get install -y nodejs
 
-			npm install
+        echo "Node:"
+        node -v
 
-			cat <<'EOF' | sudo tee /etc/systemd/system/frontend.service
+        echo "NPM:"
+        npm -v
+
+        sudo rm -rf /home/vagrant/frontend
+        sudo mkdir -p /home/vagrant/frontend
+
+        sudo rsync -a --exclude node_modules \
+            /home/vagrant/frontend-source/ \
+            /home/vagrant/frontend/
+
+        sudo chown -R vagrant:vagrant /home/vagrant/frontend
+
+        cd /home/vagrant/frontend
+
+        # Instala dependências no filesystem Linux
+        npm install
+
+        cat <<'EOF' | sudo tee /etc/systemd/system/frontend.service
 [Unit]
 Description=React Frontend
 After=network.target
@@ -53,16 +61,19 @@ User=vagrant
 WorkingDirectory=/home/vagrant/frontend
 ExecStart=/usr/bin/npm run dev -- --host 0.0.0.0
 Restart=always
+Environment=NODE_ENV=development
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-			sudo systemctl daemon-reload
-			sudo systemctl enable frontend
-			sudo systemctl restart frontend
-		SHELL
-	end
+        sudo systemctl daemon-reload
+        sudo systemctl enable frontend
+        sudo systemctl restart frontend
+
+    SHELL
+
+end
 
 	config.vm.define "backend" do |backend|
 		backend.vm.box = "bento/ubuntu-22.04" if is_arm
@@ -72,9 +83,9 @@ EOF
 		#backend.vm.network "forwarded_port", guest: 22, host: "2233"
 		backend.vm.network "private_network", ip: "10.1.1.2",netmask: "255.255.255.0", virtualbox__intnet: "front_back"
 		backend.vm.network "private_network", ip: "10.1.2.10",netmask: "255.255.255.0", virtualbox__intnet: "back_db"
-		backend.vm.synced_folder "./shared/backend", "/home/vagrant/backend"
+		backend.vm.synced_folder "../shared/backend", "/home/vagrant/backend"
 		backend.vm.provider "virtualbox" do |vb|
-			vb.gui = !is_arm
+			vb.gui = false
 			vb.memory = "2048"
 			vb.cpus = 2
 			vb.name = "backend"
@@ -130,9 +141,9 @@ EOF
 		db.vm.box_architecture = "arm64" if is_arm
 		db.vm.hostname = "db"
 		db.vm.network "private_network", ip: "10.1.2.2",netmask: "255.255.255.0", virtualbox__intnet: "back_db"
-		db.vm.synced_folder "./shared/db", "/home/vagrant/db"
+		db.vm.synced_folder "../shared/db", "/home/vagrant/db"
 		db.vm.provider "virtualbox" do  |vb|
-			vb.gui = !is_arm
+			vb.gui = false
 			vb.memory = "2048"
 			vb.cpus = 2
 			vb.name = "db"
@@ -164,7 +175,7 @@ EOF
 
 			if [ -f /home/vagrant/db/schema.sql ]; then 
 				echo "Executando schema.sql..." 
-				sudo mysql < /home/vagrant/DB/schema.sql 
+				sudo mysql < /home/vagrant/db/schema.sql 
 				echo "schema.sql executado!" 
 			else 
 				echo "AVISO: schema.sql não encontrado!"
