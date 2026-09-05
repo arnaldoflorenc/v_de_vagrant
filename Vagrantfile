@@ -7,7 +7,7 @@ Vagrant.configure("2") do |config|
   config.vm.provider "virtualbox" do |vb|
     vb.gui = false
     vb.memory = "2048"
-    vb.cpus = 2
+    vb.cpus = 1
     
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     vb.customize ["modifyvm", :id, "--nested-hw-virt", "off"]
@@ -21,10 +21,19 @@ Vagrant.configure("2") do |config|
     frontend.vm.network "forwarded_port", guest: 5173, host: 5173, auto_correct: true
     frontend.vm.network "private_network", ip: "10.1.1.10", virtualbox__intnet: "front_back"
 
-    frontend.vm.synced_folder "../shared/frontend", "/home/vagrant/frontend", type: "virtualbox"
+    # frontend.vm.synced_folder "../shared/frontend", "/home/vagrant/frontend", type: "virtualbox"
 
     frontend.vm.provision "shell", inline: <<-SHELL
       set -e
+      
+      sudo apt-get update
+      sudo apt-get install -y curl net-tools git
+
+      git clone --branch rios --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
+      cd /home/vagrant/work
+      git sparse-checkout set frontend
+      git checkout
+
       export DEBIAN_FRONTEND=noninteractive
 
       if ! command -v node &> /dev/null; then
@@ -32,9 +41,9 @@ Vagrant.configure("2") do |config|
         sudo apt-get install -y nodejs build-essential
       fi
 
-      cd /home/vagrant/frontend
-      
-      npm install --no-bin-links
+      cd /home/vagrant/work/frontend
+      npm install
+      sudo chown -R vagrant:vagrant /home/vagrant/work/frontend
 
       cat <<'EOF' | sudo tee /etc/systemd/system/frontend.service
 [Unit]
@@ -43,7 +52,7 @@ After=network.target
 
 [Service]
 User=vagrant
-WorkingDirectory=/home/vagrant/frontend
+WorkingDirectory=/home/vagrant/work/frontend
 Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=NODE_ENV=development
 ExecStart=/usr/bin/npm run dev -- --host 0.0.0.0
@@ -69,10 +78,19 @@ EOF
     backend.vm.network "private_network", ip: "10.1.1.2", virtualbox__intnet: "front_back"
     backend.vm.network "private_network", ip: "10.1.2.10", virtualbox__intnet: "back_db"
 
-    backend.vm.synced_folder "../shared/backend", "/home/vagrant/backend", type: "virtualbox"
+    # backend.vm.synced_folder "../shared/backend", "/home/vagrant/backend", type: "virtualbox"
 
     backend.vm.provision "shell", inline: <<-SHELL
       set -e
+
+      sudo apt-get update
+      sudo apt-get install -y curl net-tools git
+
+      git clone --branch rios --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
+      cd /home/vagrant/work
+      git sparse-checkout set backend
+      git checkout
+      
       export DEBIAN_FRONTEND=noninteractive
 
       if ! command -v node &> /dev/null; then
@@ -80,8 +98,9 @@ EOF
         sudo apt-get install -y nodejs build-essential
       fi
 
-      cd /home/vagrant/backend
-      npm install --no-bin-links
+      cd /home/vagrant/work/backend
+      npm install
+      sudo chown -R vagrant:vagrant /home/vagrant/work/backend
 
       cat <<'EOF' | sudo tee /etc/systemd/system/backend.service
 [Unit]
@@ -90,7 +109,7 @@ After=network.target
 
 [Service]
 User=vagrant
-WorkingDirectory=/home/vagrant/backend
+WorkingDirectory=/home/vagrant/work/backend
 Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=NODE_ENV=development
 ExecStart=/usr/bin/npm start
@@ -113,10 +132,19 @@ EOF
     db.vm.hostname = "db"
 
     db.vm.network "private_network", ip: "10.1.2.2", virtualbox__intnet: "back_db"
-    db.vm.synced_folder "../shared/db", "/home/vagrant/db"
+    # db.vm.synced_folder "../shared/db", "/home/vagrant/db"
 
     db.vm.provision "shell", inline: <<-SHELL
       set -e
+
+      sudo apt-get update
+      sudo apt-get install -y curl net-tools git
+
+      git clone --branch rios --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
+      cd /home/vagrant/work
+      git sparse-checkout set db
+      git checkout
+      
       export DEBIAN_FRONTEND=noninteractive
 
       if ! command -v mysql &> /dev/null; then
@@ -130,8 +158,8 @@ EOF
       sudo sed -i 's/^bind-address.*/bind-address = 0.0.0.0/' /etc/mysql/mysql.conf.d/mysqld.cnf
       sudo systemctl restart mysql
 
-      if [ -f /home/vagrant/db/schema.sql ]; then
-        sudo mysql < /home/vagrant/db/schema.sql
+      if [ -f /home/vagrant/work/db/schema.sql ]; then
+        sudo mysql < /home/vagrant/work/db/schema.sql
       fi
     SHELL
   end
