@@ -29,7 +29,7 @@ Vagrant.configure("2") do |config|
       sudo apt-get update
       sudo apt-get install -y curl net-tools git
 
-      git clone --branch dev --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
+      git clone --branch rios --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
       cd /home/vagrant/work
       git sparse-checkout set frontend
       git checkout
@@ -42,8 +42,8 @@ Vagrant.configure("2") do |config|
       fi
 
       cd /home/vagrant/work/frontend
+      npm install
       sudo chown -R vagrant:vagrant /home/vagrant/work/frontend
-      npm install --no-bin-links
 
       cat <<'EOF' | sudo tee /etc/systemd/system/frontend.service
 [Unit]
@@ -86,7 +86,7 @@ EOF
       sudo apt-get update
       sudo apt-get install -y curl net-tools git
 
-      git clone --branch dev --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
+      git clone --branch rios --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
       cd /home/vagrant/work
       git sparse-checkout set backend
       git checkout
@@ -99,8 +99,8 @@ EOF
       fi
 
       cd /home/vagrant/work/backend
+      npm install
       sudo chown -R vagrant:vagrant /home/vagrant/work/backend
-      npm install --no-bin-links
 
       cat <<'EOF' | sudo tee /etc/systemd/system/backend.service
 [Unit]
@@ -140,7 +140,7 @@ EOF
       sudo apt-get update
       sudo apt-get install -y curl net-tools git
 
-      git clone --branch dev --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
+      git clone --branch rios --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
       cd /home/vagrant/work
       git sparse-checkout set db
       git checkout
