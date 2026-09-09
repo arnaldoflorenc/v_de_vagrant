@@ -87,6 +87,7 @@ EOF
     backend.vm.network "private_network", ip: "10.1.1.2", virtualbox__intnet: "front_back"
     backend.vm.network "private_network", ip: "10.1.2.10", virtualbox__intnet: "back_db"
 
+    backend.vm.provision "file", source: ".env.example", destination: "/tmp/backend.env"
     # backend.vm.synced_folder "../shared/backend", "/home/vagrant/backend", type: "virtualbox"
 
     backend.vm.provision "shell", inline: <<-SHELL
@@ -118,6 +119,8 @@ EOF
       cd /home/vagrant/work/backend
       npm install
       sudo chown -R vagrant:vagrant /home/vagrant/work/backend
+      cp /tmp/backend.env /home/vagrant/work/backend/.env
+      sudo chown vagrant:vagrant /home/vagrant/work/backend/.env
 
       cat <<'EOF' | sudo tee /etc/systemd/system/backend.service
 [Unit]
