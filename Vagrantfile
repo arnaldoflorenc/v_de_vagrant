@@ -26,13 +26,21 @@ Vagrant.configure("2") do |config|
     frontend.vm.provision "shell", inline: <<-SHELL
       set -e
       
-      sudo apt-get update
-      sudo apt-get install -y curl net-tools git
+      MARKER=/etc/vagrant_provisioned
 
-      git clone --branch rios --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
-      cd /home/vagrant/work
-      git sparse-checkout set frontend
-      git checkout
+      if [ ! -f "$MARKER" ]; then
+        sudo apt-get update
+        sudo apt-get install -y curl net-tools git
+
+        git clone --branch rios --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
+        cd /home/vagrant/work
+        git sparse-checkout set frontend
+        git checkout
+      else
+        echo "Já provisionado anteriormente, pulando clone/setup inicial."
+        cd /home/vagrant/work
+        git pull
+      fi
 
       export DEBIAN_FRONTEND=noninteractive
 
@@ -66,6 +74,7 @@ EOF
       sudo systemctl daemon-reload
       sudo systemctl enable frontend
       sudo systemctl restart frontend
+      sudo touch "$MARKER"
     SHELL
   end
 
@@ -83,14 +92,22 @@ EOF
     backend.vm.provision "shell", inline: <<-SHELL
       set -e
 
-      sudo apt-get update
-      sudo apt-get install -y curl net-tools git
+      MARKER=/etc/vagrant_provisioned
 
-      git clone --branch rios --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
-      cd /home/vagrant/work
-      git sparse-checkout set backend
-      git checkout
-      
+      if [ ! -f "$MARKER" ]; then
+        sudo apt-get update
+        sudo apt-get install -y curl net-tools git
+
+        git clone --branch rios --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
+        cd /home/vagrant/work
+        git sparse-checkout set backend
+        git checkout
+      else
+        echo "Já provisionado anteriormente, pulando clone/setup inicial."
+        cd /home/vagrant/work
+        git pull
+      fi
+
       export DEBIAN_FRONTEND=noninteractive
 
       if ! command -v node &> /dev/null; then
@@ -123,6 +140,7 @@ EOF
       sudo systemctl daemon-reload
       sudo systemctl enable backend
       sudo systemctl restart backend
+      sudo touch "$MARKER"
     SHELL
   end
 
@@ -137,14 +155,22 @@ EOF
     db.vm.provision "shell", inline: <<-SHELL
       set -e
 
-      sudo apt-get update
-      sudo apt-get install -y curl net-tools git
+      MARKER=/etc/vagrant_provisioned
 
-      git clone --branch rios --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
-      cd /home/vagrant/work
-      git sparse-checkout set db
-      git checkout
-      
+      if [ ! -f "$MARKER" ]; then
+        sudo apt-get update
+        sudo apt-get install -y curl net-tools git
+
+        git clone --branch rios --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work  #! Alterar dev dps para a master (remover --branch dev)
+        cd /home/vagrant/work
+        git sparse-checkout set db
+        git checkout
+      else
+        echo "Já provisionado anteriormente, pulando clone/setup inicial."
+        cd /home/vagrant/work
+        git pull
+      fi
+
       export DEBIAN_FRONTEND=noninteractive
 
       if ! command -v mysql &> /dev/null; then
@@ -161,6 +187,7 @@ EOF
       if [ -f /home/vagrant/work/db/schema.sql ]; then
         sudo mysql < /home/vagrant/work/db/schema.sql
       fi
+      sudo touch "$MARKER"
     SHELL
   end
 end
