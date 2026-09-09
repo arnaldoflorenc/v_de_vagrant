@@ -1,0 +1,15 @@
+CREATE DATABASE IF NOT EXISTS vagrantdb;
+
+USE vagrantdb;
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    senha VARCHAR(255) NOT NULL,
+    tipo ENUM('cliente', 'admin') NOT NULL DEFAULT 'cliente'
+);
+
+CREATE USER IF NOT EXISTS 'app'@'10.1.2.10' IDENTIFIED BY 'senha'; 
+GRANT ALL PRIVILEGES ON vagrantdb.* TO 'app'@'10.1.2.10'; 
+FLUSH PRIVILEGES;
