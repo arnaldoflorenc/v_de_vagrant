@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { apiFetch } from '../services/api'
 import './HomePage.css'
 
-function HomePage() {
+function HomePage({ onLogin }) {
   const [isRegister, setIsRegister] = useState(false)
   const [formData, setFormData] = useState({
     nome: '',
@@ -42,6 +42,7 @@ function HomePage() {
         type: 'success',
         message: `Bem-vindo(a), ${data.usuario.nome}!`,
       })
+      onLogin(data.usuario)
       setFormData({ ...formData, senha: '' })
     } catch (error) {
       setStatus({
