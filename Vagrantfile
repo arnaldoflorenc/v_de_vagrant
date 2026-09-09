@@ -87,7 +87,7 @@ EOF
     backend.vm.network "private_network", ip: "10.1.1.2", virtualbox__intnet: "front_back"
     backend.vm.network "private_network", ip: "10.1.2.10", virtualbox__intnet: "back_db"
 
-    backend.vm.provision "file", source: ".env.example", destination: "/tmp/backend.env"
+    backend.vm.provision "file", source: ".env", destination: "/tmp/backend.env"
     # backend.vm.synced_folder "../shared/backend", "/home/vagrant/backend", type: "virtualbox"
 
     backend.vm.provision "shell", inline: <<-SHELL
