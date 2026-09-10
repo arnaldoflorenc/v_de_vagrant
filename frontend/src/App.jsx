@@ -1,5 +1,6 @@
 import HomePage from './pages/HomePage'
 import KitchenPage from './pages/KitchenPage'
+import PedidosPage from './pages/PedidosPage'
 import { useState } from 'react'
 
 function App() {

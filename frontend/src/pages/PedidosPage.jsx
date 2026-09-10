@@ -46,8 +46,8 @@ function PedidosPage({ usuario, onLogout }) {
     setIsLoading(true)
     setError('')
     try {
-      const response = await apiFetch('/pedidos/')
-      setPedidos(response)
+      const response = await apiFetch('/cozinha/pedidos')
+      setPedidos(Array.isArray(response) ? response : [])
     } catch (err) {
       setError('Erro ao buscar pedidos: ' + err.message)
     } finally {
@@ -83,7 +83,7 @@ function PedidosPage({ usuario, onLogout }) {
     const hora_pedido = agora.toTimeString().slice(0, 8)
 
     try {
-      const response = await apiFetch('/pedir', {
+      const response = await apiFetch('/cozinha/pedidos', {
         method: 'POST',
         body: JSON.stringify({
           id_usuario: usuario.id,
@@ -110,7 +110,7 @@ function PedidosPage({ usuario, onLogout }) {
     setError('')
 
     try {
-      await apiFetch('/pedidos', {
+      await apiFetch('/cozinha/pedidos', {
         method: 'PUT',
         body: JSON.stringify({ id, value: novoValue }),
       })
@@ -136,7 +136,7 @@ function PedidosPage({ usuario, onLogout }) {
 
       <form className="novo-pedido-form" onSubmit={handleCriarPedido}>
         <ul className="cardapio-lista">
-          {CARDAPIO.map((prato) => (
+          {cardapio.map((prato) => (
             <li key={prato} className="cardapio-item">
               <span>{prato}</span>
               <div className="quantidade-controle">
