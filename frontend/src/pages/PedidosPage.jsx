@@ -113,9 +113,21 @@ function PedidosPage({ usuario, onLogout }) {
   return (
     <div className="pedidos-page">
       <header className="pedidos-header">
-        <h1>Pedidos</h1>
-        {usuario && <span>Olá, {usuario.nome}</span>}
-        {onLogout && <button onClick={onLogout}>Sair</button>}
+        <div>
+          <h1>Pedidos</h1>
+          {usuario && <span>Olá, {usuario.nome}</span>}
+        </div>
+
+        <div className="pedidos-actions">
+          <button type="button" className="refresh-button" onClick={fetchPedidos}>
+            Atualizar
+          </button>
+          {onLogout && (
+            <button type="button" className="logout-button" onClick={onLogout}>
+              Sair
+            </button>
+          )}
+        </div>
       </header>
 
       <form className="novo-pedido-form" onSubmit={handleCriarPedido}>

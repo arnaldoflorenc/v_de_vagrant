@@ -31,20 +31,32 @@
   font-size: 0.98rem;
 }
 
-.pedidos-header button {
-  border: 1px solid #bf8b75;
+.pedidos-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.refresh-button,
+.logout-button {
+  border: 1px solid #bdc7b8;
   border-radius: 8px;
   padding: 11px 16px;
   background: transparent;
-  color: #9a4e32;
+  color: #3e5747;
   font: inherit;
   font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
 }
 
-.pedidos-header button:hover {
+.refresh-button:hover,
+.logout-button:hover {
   background: #e6e8dc;
+}
+
+.logout-button {
+  border-color: #bf8b75;
+  color: #9a4e32;
 }
 
 /* Formulário / seleção do cardápio */
@@ -253,7 +265,12 @@
     flex-direction: column;
   }
 
-  .pedidos-header button {
+  .pedidos-actions {
     width: 100%;
+  }
+
+  .refresh-button,
+  .logout-button {
+    flex: 1;
   }
 }
