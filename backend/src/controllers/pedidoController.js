@@ -36,4 +36,22 @@ const atualiza_pedido = async (req, res) => {
     }
 };
 
-module.exports = { get_pedido, atualiza_pedido };
+    const post_pedido = async (req, res) => {
+        const { id_usuario, data_pedido, hora_pedido, content} = req.body;
+
+        if (!id_usuario || !data_pedido || !hora_pedido || !content) {
+            return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+        }
+        try {
+            const [result] = await db.query(
+                "INSERT INTO pedidos (usuario_id, data_pedido, hora_pedido, content) VALUES (?, ?, ?, ?)",
+                [id_usuario, data_pedido, hora_pedido, content]
+            );
+            res.status(201).json({ message: "Pedido criado com sucesso", id: result.insertId });
+        } catch (error) {
+            console.error("Erro ao criar pedido:", error);
+            res.status(500).json({ error: "Erro ao criar pedido" });
+        }
+    }
+
+module.exports = { get_pedido, atualiza_pedido, post_pedido };

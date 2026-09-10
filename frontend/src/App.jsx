@@ -9,6 +9,9 @@ function App() {
     return <KitchenPage usuario={usuario} onLogout={() => setUsuario(null)} />
   }
 
+  if( usuario?.tipo === 'cliente') {
+    return <PedidosPage usuario={usuario} onLogout={() => setUsuario(null)} />
+  }
   return <HomePage onLogin={setUsuario} />
 }
 

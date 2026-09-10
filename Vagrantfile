@@ -32,7 +32,7 @@ Vagrant.configure("2") do |config|
         sudo apt-get update
         sudo apt-get install -y curl net-tools git
 
-        git clone --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work
+        git clone --branch dev --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work
         cd /home/vagrant/work
         git sparse-checkout set frontend
         git checkout
@@ -99,7 +99,7 @@ EOF
         sudo apt-get update
         sudo apt-get install -y curl net-tools git
 
-        git clone --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work
+        git clone --branch dev --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work
         cd /home/vagrant/work
         git sparse-checkout set backend
         git checkout
@@ -164,7 +164,7 @@ EOF
         sudo apt-get update
         sudo apt-get install -y curl net-tools git
 
-        git clone --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work
+        git clone --branch dev --no-checkout https://github.com/arnaldoflorenc/v_de_vagrant.git /home/vagrant/work
         cd /home/vagrant/work
         git sparse-checkout set db
         git checkout
