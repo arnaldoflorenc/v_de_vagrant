@@ -105,27 +105,6 @@ function PedidosPage({ usuario, onLogout }) {
     }
   }
 
-  const handleAtualizarStatus = async (id, novoValue) => {
-    setUpdatingId(id)
-    setError('')
-
-    try {
-      await apiFetch('/cozinha/pedidos', {
-        method: 'PUT',
-        body: JSON.stringify({ id, value: novoValue }),
-      })
-      setPedidos((prevPedidos) =>
-        prevPedidos.map((pedido) =>
-          pedido.id === id ? { ...pedido, value: novoValue } : pedido
-        )
-      )
-    } catch (err) {
-      setError('Erro ao atualizar pedido: ' + err.message)
-    } finally {
-      setUpdatingId(null)
-    }
-  }
-
   return (
     <div className="pedidos-page">
       <header className="pedidos-header">
@@ -173,15 +152,6 @@ function PedidosPage({ usuario, onLogout }) {
               <span className={`status status-${pedido.value.replace(' ', '-')}`}>
                 {pedido.value}
               </span>
-              <select
-                value={pedido.value}
-                disabled={updatingId === pedido.id}
-                onChange={(e) => handleAtualizarStatus(pedido.id, e.target.value)}
-              >
-                <option value="pendente">Pendente</option>
-                <option value="em produção">Em produção</option>
-                <option value="finalizado">Finalizado</option>
-              </select>
             </li>
           ))}
         </ul>
