@@ -46,14 +46,19 @@ function PedidosPage({ usuario, onLogout }) {
     setIsLoading(true)
     setError('')
     try {
-      const response = await apiFetch('/cozinha/pedidos')
+      const query = new URLSearchParams({
+        userId: String(usuario?.id || ''),
+        tipo: String(usuario?.tipo || ''),
+      }).toString()
+
+      const response = await apiFetch(`/cozinha/pedidos?${query}`)
       setPedidos(Array.isArray(response) ? response : [])
     } catch (err) {
       setError('Erro ao buscar pedidos: ' + err.message)
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [usuario?.id, usuario?.tipo])
 
   useEffect(() => {
     fetchPedidos()

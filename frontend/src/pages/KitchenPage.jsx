@@ -25,14 +25,19 @@ function KitchenPage({ usuario, onLogout }) {
   const loadPedidos = useCallback(async () => {
     try {
       setError('')
-      const data = await apiFetch('/cozinha/pedidos')
+      const query = new URLSearchParams({
+        userId: String(usuario?.id || ''),
+        tipo: String(usuario?.tipo || ''),
+      }).toString()
+
+      const data = await apiFetch(`/cozinha/pedidos?${query}`)
       setPedidos(Array.isArray(data) ? data : [])
     } catch (requestError) {
       setError(requestError.message)
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [usuario?.id, usuario?.tipo])
 
   useEffect(() => {
     loadPedidos()

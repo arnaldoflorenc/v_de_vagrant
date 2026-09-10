@@ -1,10 +1,27 @@
 const db = require("../config/database");
 
 const get_pedido = async (req, res) => {
+    const usuarioId = Number(req.query.userId || req.query.id_usuario || 0);
+    const tipoUsuario = String(req.query.tipo || "").trim().toLowerCase();
+
     try {
-        const [pedidos] = await db.query(
-            "SELECT id, content, value, data_pedido, hora_pedido FROM pedidos ORDER BY data_pedido DESC, id DESC"
-        );
+        const podeVerTodos = ["cozinha", "admin"].includes(tipoUsuario);
+
+        if (!podeVerTodos && !usuarioId) {
+            return res.status(400).json({ error: "Usuário inválido para consulta de pedidos." });
+        }
+
+        let sql = "SELECT id, usuario_id, content, value, data_pedido, hora_pedido FROM pedidos";
+        const params = [];
+
+        if (!podeVerTodos) {
+            sql += " WHERE usuario_id = ?";
+            params.push(usuarioId);
+        }
+
+        sql += " ORDER BY data_pedido DESC, id DESC";
+
+        const [pedidos] = await db.query(sql, params);
         res.json(pedidos);
     } catch (error) {
         console.error("Erro ao buscar pedidos:", error);
