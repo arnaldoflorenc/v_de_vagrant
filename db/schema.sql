@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     usuario_id INT NOT NULL,
     data_pedido DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    hora_pedido TIME NOT NULL DEFAULT CURRENT_TIME,
+    hora_pedido TIME NOT NULL DEFAULT (CURRENT_TIME()),
     content VARCHAR(255) NOT NULL,
     value ENUM('pendente', 'em produção', 'finalizado') NOT NULL DEFAULT 'pendente',
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
