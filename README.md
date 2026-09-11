@@ -98,4 +98,4 @@ O schema (`db/schema.sql`) cria o banco com duas tabelas:
 - **`usuarios`**: `id`, `nome`, `email`, `senha` (hash bcrypt), `tipo` (`cliente` \| `cozinha` \| `admin`)
 - **`pedidos`**: `id`, `usuario_id` (FK para `usuarios`), `data_pedido`, `hora_pedido`, `content`, `value` (status do pedido)
 
-O script também cria o usuário MySQL `app`, usado pelo backend para se conectar ao banco a partir da rede `back_db`.
+O script também cria um usuário MySQL, usado pelo backend para se conectar ao banco a partir da rede.
